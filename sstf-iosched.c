@@ -38,25 +38,40 @@ static int sstf_dispatch(struct request_queue *q, int force){
 	 * Antes de retornar da função, imprima o sector que foi atendido.
 	 */
 
-	rq = list_first_entry_or_null(&nd->queue, struct request, queuelist); // não quer dizer que é mais próximo
-	// tem que iterar a lista para pegar o mais próximo
+	
+	
+
+	// * SEARCH FOR THE CLOSES REQUEST OF THE LAST SEEK POSITION
+	// for now we have to search for the closes request, maybe its better to order it in add_request
+	// se tiver ordenado pela posicao absoluta de seek, da ir iterando enquanto encontra uma distancia entre
+	// o current seek e o old seek, no momento que deixar de diminuir a distancia, retorna com o valor anterior.
+	struct request *closest_rq; 				//= kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
 	struct list_head *ptr;
 	list_for_each(ptr, &nd->queue){
-		rq = list_entry(ptr, struct request, queueList); //dentr desse ptr pegar dado do tipo request na queuelist
-		if blk_rq_pos(rq > last_pos){
-
+		rq = list_entry(ptr, struct request, queueList); 
+		if ( abs(blk_rq_pos(rq) - last_pos) < abs(blk_rq_pos(closest_rq) - last_pos ) ){
+			closest_rq = rq;
 		}
 	}
 
-
-	if (rq) {
-		last_pos = blk_rq_pos(rq);
-		list_del_init(&rq->queuelist);
-		elv_dispatch_sort(q, rq);
-		printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, blk_rq_pos(rq));
-
+	
+	if(closest_rq){
+		last_pos = blk_eq_pos(closest_rq);
+		list_del(closest_rq -> queuelist);
+		elv_dispatch_sort(q, closest_rq);
+		
+		printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, blk_rq_pos(closest_rq));
 		return 1;
 	}
+
+	// if (rq) {
+	// 	last_pos = blk_rq_pos(rq);
+	// 	list_del_init(&rq->queuelist);
+	// 	elv_dispatch_sort(q, rq);
+	// 	printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, blk_rq_pos(rq));
+
+	// 	return 1;
+	// }
 	return 0;
 }
 
@@ -70,6 +85,9 @@ static void sstf_add_request(struct request_queue *q, struct request *rq){
 	 *
 	 * Antes de retornar da função, imprima o sector que foi adicionado na lista.
 	 */
+	
+	// * IDEIA: ordernar lista pelo blk_rq_pos absoluto
+
 
 	list_add_tail(&rq->queuelist, &nd->queue);
 	printk(KERN_EMERG "[SSTF] add %c %llu\n", direction, blk_rq_pos(rq));
@@ -96,7 +114,7 @@ static int sstf_init_queue(struct request_queue *q, struct elevator_type *e){
 	}
 	eq->elevator_data = nd;
 
-	INIT_LIST_HEAD(&nd->queue);
+	INIT_LIST_HEAD(&nd->queue); //INICIALIZA A LISTA	
 
 	spin_lock_irq(q->queue_lock);
 	q->elevator = eq;
