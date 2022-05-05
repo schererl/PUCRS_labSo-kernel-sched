@@ -29,9 +29,7 @@ static long long int abslong(long long int in){
 	if (in < 0){
 		return in *-1;	
 	}
-	else{
-		return in;
-	}
+	return in;
 }
 
 /* Esta função despacha o próximo bloco a ser lido. */
@@ -53,22 +51,24 @@ static int sstf_dispatch(struct request_queue *q, int force){
 	// for now we have to search for the closes request, maybe its better to order it in add_request
 	// se tiver ordenado pela posicao absoluta de seek, da ir iterando enquanto encontra uma distancia entre
 	// o current seek e o old seek, no momento que deixar de diminuir a distancia, retorna com o valor anterior.
-	struct request *closest_rq; //= kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
-	long long int closest_dist = 5223372036854775807;
+	struct request *closest_rq = NULL; //= kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
+	struct list_head *closest_head = NULL;
+	long long unsigned int closest_dist = 23372036854775807;
 	struct list_head *ptr;
 	list_for_each(ptr, &nd->queue){
 		rq = list_entry(ptr, struct request, queuelist); 
-		long long int new_dist = blk_rq_pos(rq);
-		if ( abslong(new_dist - last_pos) < abslong(closest_dist - last_pos) ) {
+		long long unsigned int new_pos = blk_rq_pos(rq);
+		//printk(KERN_EMERG "pos %llu, last pos %llu\n", new_pos, last_pos);
+		if ( abslong(new_pos - last_pos) < closest_dist ) {
 			closest_rq = rq;
-			closest_dist = blk_rq_pos(closest_rq);
+			closest_head = ptr;
+			closest_dist = abslong(new_pos - last_pos); 
 		}
 	}
-
 	
 	if(closest_rq){
-		last_pos = closest_dist;//blk_eq_pos(closest_rq);
-		list_del(&closest_rq -> queuelist);
+		last_pos = blk_rq_pos(closest_rq);
+		list_del(closest_head);
 		elv_dispatch_sort(q, closest_rq);
 		
 		printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, blk_rq_pos(closest_rq));
