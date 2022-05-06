@@ -1,8 +1,9 @@
 # labSo-escalonador
 Victor Putrich e Lucca Alguma Coisa
 
-TODO: Descobrir como adiciona a biblioteca time.h no kernel pelo buildroot
-TODO2: Capturar na execução do escalonador a média de tempo de execução do add, dispatch e do programa como um todo pra poder comparar eles depois
+ - TODO: Descobrir como adiciona a biblioteca time.h no kernel pelo buildroot
+
+ - TODO2: Capturar na execução do escalonador a média de tempo de execução do add, dispatch e do programa como um todo pra poder comparar eles depois
 
 ## Sobre
 Aqui explicar o que o projeto deve fazer (resumo do enunciado do trabalho e um resumo de como fizemos ele)
