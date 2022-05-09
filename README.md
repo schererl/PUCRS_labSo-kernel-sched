@@ -18,17 +18,18 @@ a partir da distânica entre a última leitura em disco e as seguintes.
 ### sstf
 A política SSTF busca diminuir o seek time de disco que é o tempo que a cabeça de leitura do disco leva para se deslocar de um trilha até o destino, ou seja, a próxima requisição de leitura ou escrita. Para implementar tal política, comparamos duas possíveis soluções, a primeira que pode ser chamada de Naive e a outra que chamamos de CAD (Closest Absolute Distance).
 
-    - SSTF-Naive: Nesta versão não fizemos não usamos nenhum critério de ordenamento das requisições que chegam, elas são adicionadas a fila por ordem de chegada. Durante a fase de Dispatch, iteramos ao longo de toda a lista para pegar a requisição que tenha posição de leitura/escrita mais próxima da última requisição atendida.
+   - SSTF-Naive: Nesta versão não fizemos não usamos nenhum critério de ordenamento das requisições que chegam, elas são adicionadas a fila por ordem de chegada. Durante a fase de Dispatch, iteramos ao longo de toda a lista para pegar a requisição que tenha posição de leitura/escrita mais próxima da última requisição atendida.
     
-    - SSTF-CAD: Depois de implementarmos uma política sem se preocupar com ordenamento, fizemos uma versão que passa a ordenar as requisições conforme chegam, garantindo que durante o dispatch sempre removemos o primeiro elemento da fila. Este processo simplifica o tempo de processamento do dispatch que deixa de iterar a lista inteira sempre e adiciona uma maior complexidade na operação de ADD da fila. Para o Add, usamos a posição absoluta das requisições, mas ordenamos pela distância entre as requisições conseguintes. Existem três cenários que podem acontecer na adiçãode uma nova requisição.
+   - SSTF-CAD: Depois de implementarmos uma política sem se preocupar com ordenamento, fizemos uma versão que passa a ordenar as requisições conforme chegam, garantindo que durante o dispatch sempre removemos o primeiro elemento da fila. Este processo simplifica o tempo de processamento do dispatch que deixa de iterar a lista inteira sempre e adiciona uma maior complexidade na operação de ADD da fila. Para o Add, usamos a posição absoluta das requisições, mas ordenamos pela distância entre as requisições conseguintes. Existem três cenários que podem acontecer na adiçãode uma nova requisição.
+        
         * Novo Head: Se a distância da nova requisição e head é menor que head e seu suscessor, então atribuímos head para a nova requisição e o antigo head vira o próximo da fila.
-        <img src="https://github.com/schererl/labSo-escalonador/artifacts/add-head.png" width="516"/>
+                       <p align="center"> <img src="https://github.com/schererl/labSo-escalonador/blob/main/artifacts/add-head.png" width="350"/></p>
 
         * Meio da fila: Iteramos a fila até que encontremos uma situação como, a distânica entre a requisição da fila e a nova requisição é menor que a requisição da fila e a sua próxima requisição. Neste caso colocamos a nova requisição no "meio" da requisição e de sua antiga suscesora.
-        <img src="https://github.com/schererl/labSo-escalonador/artifacts/add-middle.png" width="516"/>
+         <p align="center"><img src="https://github.com/schererl/labSo-escalonador/blob/main/artifacts/add-middle.png" width="350"/></p>
 
         
-        * Fim da fila: Se em nenhum momento encontramos um espaço onde a nova requisição é mais próxima de algum dos elementos da fila e seu suscessor, ela é inserida no fim da fila.
+       * Fim da fila: Se em nenhum momento encontramos um espaço onde a nova requisição é mais próxima de algum dos elementos da fila e seu suscessor, ela é inserida no fim da fila.
 
 
 ## Biblitoeca "list.h"
