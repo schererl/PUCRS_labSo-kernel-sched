@@ -1,21 +1,25 @@
 # labSo-escalonador
 Victor Putrich e Lucca Alguma Coisa
 
- - TODO: Descobrir como adiciona a biblioteca time.h no kernel pelo buildroot
+Tabela de conteúdos
+=================
+<!--ts-->
+   * [Sobre](#Sobre)
+   * [Escalonador](#Escalonador)
+   * [Biblioteca-list.h](#Biblioteca-list.h)
+   * [Implementação](#Implementação)
+   * [Execução](#Execução)
+<!--te-->
 
- - TODO2: Capturar na execução do escalonador a média de tempo de execução do add, dispatch e do programa como um todo pra poder comparar eles depois
+# Sobre
+Iremos apresentar neste trabalho uma implementação da política de escalonamento SSTF (Shortest Seek Time First). O módulo será compilado junto ao Kernel Linux 4.13.9, usando o Buildroot. Para isto, utilizaremos chamadas de sistema disponíveis nas bibliotecas nativas de C, incluindo a biblioteca "list.h" que foi utilizada como estrutura de armazenamento das requisições feitas de acesso ao disco. Por fim, apresentaremos uma comparação entre a nossa implementação em relação a uma versão que também usa a estrutura de filas encadeadas, mas não implementa uma política específica de escalonamento chamada Noop.
 
-## Sobre
-Iremos apresentar neste trabalho uma implementação da política de escalonamento SSTF (Shortest Seek Time First). O módulo será compilado junto ao Kernel Linux 4.13.9, usando o Buildroot. Para isto, utilizaremos chamadas de sistema disponíveis nas bibliotecas nativas de C, incluindo a biblioteca "list.h" que foi utilizada como estrutura de armazenamento das requisições feitas de acesso ao disco. Por fim, apresentaremos uma comparação entre a nossa implementação em relação a uma versão que também usa a estrutura de filas encadeadas, mas não implementa uma política específica de escalonamento que não seja FIFO (First In First Out), chamada Noop.
-
-## Escalonador
+# Escalonador
 O escalonador é responsável por organizar o recebimento e leitura dos processos em disco. É trabalho dele fazer bom uso dos recursos disponíveis através de uma política
 de escalonamento. Para este trabalho iremos fazer uma comparação entre uma política simples chamada noop e outra política mais elaborada busca otimizar o acesso ao disco
 a partir da distânica entre a última leitura em disco e as seguintes.
 
-### noop
-
-### sstf
+## sstf
 A política SSTF busca diminuir o seek time de disco que é o tempo que a cabeça de leitura do disco leva para se deslocar de um trilha até o destino, ou seja, a próxima requisição de leitura ou escrita. Para implementar tal política, comparamos duas possíveis soluções, a primeira que pode ser chamada de Naive e a outra que chamamos de CAD (Closest Absolute Distance).
 
    - *SSTF-Naive*: Nesta versão não fizemos não usamos nenhum critério de ordenamento das requisições que chegam, elas são adicionadas a fila por ordem de chegada. Durante a fase de Dispatch, iteramos ao longo de toda a lista para pegar a requisição que tenha posição de leitura/escrita mais próxima da última requisição atendida.
@@ -32,7 +36,7 @@ A política SSTF busca diminuir o seek time de disco que é o tempo que a cabeç
        * *Fim da fila*: Se em nenhum momento encontramos um espaço onde a nova requisição é mais próxima de algum dos elementos da fila e seu sucessor, ela é inserida no fim da fila.
 
 
-## Biblioteca "list.h"
+# Biblioteca-list.h
 A biblioteca list.h pode ser consultada em [https://github.com/torvalds/linux/blob/master/include/linux/list.h]. Ela fornece uma implementação de lista duplamente encadeada que pode ser usada sobre qualquer tipo de estrutura que deseja representar como uma fila. Para a nossa implementação de sstf, não foi necessário usarmos qualquer tipo de atributo adicional além do que se pode obter a partir da lista, extraímos a posição de seek de cada requisição usando o método blk_rq_pos(requsição) como parâmetro de ordenação.
 
 Para operarmos sobre a lista, precisamos adicionar à nossa estrutura um componente chamado list_head que deve ser inicializado pelo método init_list_head que recebe de parâmetro a referência para a instância inicial da fila. A seguir, listamos os métodos utilizados da biblioteca e onde usamos eles:
@@ -45,9 +49,9 @@ Para operarmos sobre a lista, precisamos adicionar à nossa estrutura um compone
    * **list_entry**(list_head \*cur, struct request, queuelist): Esta função é usada dentro de list_for_each para extrair de 'cur' o request da posição corrente. Foi usado em SSTF-Naive para saber a posição de seek de cada request para buscar a menor distânica com a última posição de seek lida.
 
 
-## Implementação
+# Implementação
 
-#### sstf_data
+### sstf_data
 Para implementarmos as duas forma de SSTF usando a biblioteca "list.h", primeiro criamos uma struct chamada *sstf_data* que guarda um *list_head*, pré-requisito para fazer uso das listadas dupamente encadeadas.
 
 ### abslong
@@ -57,7 +61,7 @@ Para o *SSTF-CAD*, precisamos medir a distância entre duas requisições, para 
 Para que pudessemos visualizar o que estava acontecendo com as listas de requisições, criamos a função printList que recebe um ponteiro para *SSTF_DATA* é retornar no kernel uma chamada de sistema de saída de toda lista.
 
 
-### sstf_add -Naive
+## sstf_add -Naive
 Os métodos de add são responsáveis por adicionar na fila novas requisições que estão chegando, usamos as funções list_add_tail para fazê-lo.
 Na versão *Naive* como não fazemos ordenamento, simplesmente vamos adicionando no final da fila as requisições que vão chegando.
 ```
@@ -69,7 +73,7 @@ static void sstf_add_request(struct request_queue *q, struct request *rq){
 ```
 Para adicionarmos o novo request que chega, precisamos passar por parâmetro a entrada do tipo list_head que é está armazenada no parâmetro queuelist em request e também precisamos passar a início da fila que está em sstf_data.
 
-### sstf_add -Closest Absolute Distance
+## sstf_add -Closest Absolute Distance
 Na versão CAD, a operação de inserção na fila é a mais importante, porque é onde é feita a lógica da política. Dividimos ela ao explicaros o CAD como sendo em três partes, porém não foi mencionado um caso especial que pode ser considerado trivial, quando a lista está vazia sem requisições, simplesmente adicionamos em TAIL a requisição.
  
 ```
@@ -107,22 +111,19 @@ Em seguida, é necessário avaliar se a distância entre a posição da nova req
  ```
 	. . .
 	
-	// Adiciona no meio: Se a distacia entre rq e o nodo atual for menor que nodo atual e seu sucessor, adiciona ele no meio
-	
 	ptr = (&(nd -> queue))->next; //pula head porque já foi avaliado anteriormente.
 	while(ptr->next != &(nd -> queue)){
 		 struct list_head *next = ptr->next;
-		 //pega a pos 
+		 
 		 struct request *curE = list_entry(ptr, struct request, queuelist); 
 		 struct request *nextE = list_entry(next, struct request, queuelist); 
 		 long long unsigned int curPos = blk_rq_pos(curE);
 		 long long unsigned int nextPos = blk_rq_pos(nextE);
 
-		 // verifica se deve se rq deve ser inserido no meio
 		 if(abslong(curPos - nextPos) > abslong(curPos - req_pos)){
 			  list_add(&rq->queuelist, ptr); 
       
-      return;
+      			  return;
 		 }
 
 		 ptr = next;
@@ -138,7 +139,7 @@ Se a nova requisição ainda não encontrou o seu lugar, não precisamos nos apa
 ```
 
 
-### sstf_dispatch -Naive
+## sstf_dispatch -Naive
 Um dos métodos principais para as duas abordagens, o sstf_dispatch recebe como parâmetro um ponteiro para o request do tipo request_queue, a partir dele extraímos a nosssa struct criada *sstf_data*.
 Existem duas abordagens deste método, primeiro iremos presentar como é feita o dispatch no *sstf-Naive* e depois no *sstf-CAD*.
 
@@ -149,7 +150,6 @@ static int sstf_dispatch(struct request_queue *q, int force){
 	char direction = 'R';
 	struct request *rq;
 
-	// busca pela requisição mais próxima de last_pos
 	struct request *closest_rq = NULL;
 	struct list_head *closest_head = NULL;
 	long long unsigned int closest_dist = 23372036854775807;
@@ -170,7 +170,6 @@ static int sstf_dispatch(struct request_queue *q, int force){
 		list_del(closest_head);
 		elv_dispatch_sort(q, closest_rq);
 		
-		printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, blk_rq_pos(closest_rq));
 		return 1;
 	}
 
@@ -180,22 +179,19 @@ static int sstf_dispatch(struct request_queue *q, int force){
 ```
 Perceba que para que possamos dar dispatch efetivamente em uma requisição precisamos iterar toda lista com o método *list_for_each* e toda vez que encontramos um elemento que tenha uma distância entre a última posição lida (*last_pos*) consigo menor que a armazenada em *closest_distance*, ao sobreescrevemos com o novo valor achado. Um último detalhe é que no final é preciso atualizar a última posição lida como sendo a que está em *closes_distance*.
 
-### sstf_dispatch -Closest Absolute Distance
+## sstf_dispatch -Closest Absolute Distance
 
 Como explicado anteriormente, no *SSTF-CAD* a complexidade da política fica para o momento de adição de novas requisições na fila, logo tudo que é preciso fazer no Dispatch é remover e processar o primeiro da fila:
 ```
 struct sstf_data *nd = q->elevator->elevator_data;
 	char direction = 'R';
 	struct request *rq;
-	//primeiro da lista
 	rq = list_first_entry_or_null(&nd->queue, struct request, queuelist);
 	if (rq) {
-		 last_pos = blk_rq_pos(rq);
-   list_del_init(&rq->queuelist);
-		 elv_dispatch_sort(q, rq);
-		//printList(nd);
-		printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, last_pos);
-
+		last_pos = blk_rq_pos(rq);
+   		list_del_init(&rq->queuelist);
+		elv_dispatch_sort(q, rq);
+		
 		return 1;
 	}
 	return 0;
@@ -205,20 +201,15 @@ Removemos o HEAD da fila e se este não for null, atualizamos a última posiçã
 
 # Execução
 
-
-
-
-
-
 ## Resultados
  Para que possamos visualizar a diferença nas políticas de leitura ativamos no nosso Kernel Linux a política desejada Noop ou SSTF e rodamos o script sector_read para disparar diversas requisições de acesso ao disco. 
  
  Apresentaremos a seguir uma comparação de acesso entre o Noop e o *SSTF-Naive*, ou seja, a ordem de acesso ao disco é referente a sequência de dispatch das duas políticas. Os gráficos tem uma relação de números de requisições atendidas por posição de seek:
  
  <p float="left">
-  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-noop.png" width="500" alt="Noop"/>
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-noop.png" width="400" alt="Noop"/>
   
-  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-sstf-naive.png" width="500" alt="SSTF-Naive"/>
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-sstf-naive.png" width="400" alt="SSTF-Naive"/>
  </p>
  
  O gráfico a esquerda representa a operação de *Noop* e o gráfico à direita *SSTF-Naive*. Perceba que a medida que mais requisições vão se acumulado no SSTF ele vai deixando de apresentar variações bruscas de sentido e sua declividade fica cada vez mais suave, atendendo uma grande parcela de requisições em um único movimento de subida ou descida. Isso ocorre porque a medida que as requisições se acumulam, elas vão sendo atendidas visando minimizar a distância que o disco deve percorrer até a próxima requisição. 
