@@ -39,9 +39,8 @@ Para operarmos sobre a lista, precisamos adicionar à nossa estrutura um compone
 
    * **list_first_entry_or_null**(list_head \*entry, struct request, member): Função usado para pegar o primeiro elemento da lista, neste caso, retorna um tipo request.
    * **list_del_init**(list_head \*entry): Deleta o elemento passado por ponteiro 'entry'. Usado quando a requisição é consumida no dispatch.
-   * **list_add**(list_head *new, list_head *head): Adiciona um elemento novo após head. Usamos esta função no SSTF-CAD para inserir uma nova requisição no meio de duas já existentes na fila.
+   * **list_add**(list_head *new, list_head *head): Adiciona um elemento novo após head. Usamos esta função no SSTF-CAD para inserir uma nova requisição no meio de duas já existentes na fila, também usamos para adicionar um novo head à lista.
    * **list_add_tail**(list_head \*new): Adiciona um novo elemento que contém uma requisição no final da fila. Usamos ela em ambas implementações do sstf.
-   * **list_add_replace_init**(list_head \*old_head, list_head \*new_head): Usamos para substituir o novo head no SSTF-CAD, logo após o reeinserimos o antigo head usando list_add(&old_head, &new_head).
    * **list_for_each**(list_head \*cur, list_head queue): Um macro fornecido pela lib que itera toda lista encadeada e atribui à cur o elemento atual. Este método é usado para iterarmos a fila no método dispatch do SSTF-Naive.
    * **list_entry**(list_head \*cur, struct request, queuelist): Esta função é usada dentro de list_for_each para extrair de 'cur' o request da posição corrente. Foi usado em SSTF-Naive para saber a posição de seek de cada request para buscar a menor distânica com a última posição de seek lida.
 
@@ -58,6 +57,26 @@ Aqui falar com detalhes como fizemos o nosso escalonador
 - Falar sobre como vai ser a nossa versão com ordenamento no método add
 
 ## Resultados
- Por enquanto apresentar os dois gráficos que temos e compará-los (noop e sstf-sem ordenamento)
+ Para que possamos visualizar a diferença nas políticas de leitura ativamos no nosso Kernel Linux a política desejada Noop ou SSTF e rodamos o script sector_read para disparar diversas requisições de acesso ao disco. 
+ 
+ Apresentaremos a seguir uma comparação de acesso entre o Noop e o *SSTF-Naive*, ou seja, a ordem de acesso ao disco é referente a sequência de dispatch das duas políticas. Os gráficos tem uma relação de números de requisições atendidas por posição de seek:
+ 
+ <p float="left">
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-noop.png" width="500" alt="Noop"/>
+  
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-sstf-naive.png" width="500" alt="SSTF-Naive"/>
+ </p>
+ 
+ O gráfico a esquerda representa a operação de *Noop* e o gráfico à direita *SSTF-Naive*. Perceba que a medida que mais requisições vão se acumulado no SSTF ele vai deixando de apresentar variações bruscas de sentido e sua declividade fica cada vez mais suave, atendendo uma grande parcela de requisições em um único movimento de subida ou descida. Isso ocorre porque a medida que as requisições se acumulam, elas vão sendo atendidas visando minimizar a distância que o disco deve percorrer até a próxima requisição. 
+ 
+ *As tabelas com os resultados que originaram os gráficos se encontram neste repositório nos links:*
+  * https://github.com/schererl/labSo-escalonador/blob/main/output/log-noop.txt
+  * https://github.com/schererl/labSo-escalonador/blob/main/output/log-sstf-Naive_4f.txt
+ 
+ Para que fosse possível visualizar de forma mais clara a execução da política *SSTF-CAD* (figura logo abaixo), foi necessário aumentar o número de forks executados para 6. O que ocorreu com os testes de estresse em disco foi que todas as requisições estavam entrando e saindo da fila diretamente. A explicação que encontramos para este comportamento, que ficou muito mais frequente no *CAD*, foi que como a complexidade da operação de ADD aumentou e o de Dispatch ficou o mais simples possível, o kernel conseguia consumir requisições muito mais rápido que adicioná-las, em outras palavras, o fluxo de entrada ficou muito mais rápido que o fluxo de saída, portanto, a política de ordenamento não estava conseguindo sequer entrar em ação.
+ 
+ <p align="center"><img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-sstf-CAD-6FORKS.png" width="850"/></p>
+ 
+ Podemos observar que mesmo aumentando o número de processos, logo, aumentando as chances de ocorrerem operações de adição simultâneas... CONTINUAR AQUI
  
  
