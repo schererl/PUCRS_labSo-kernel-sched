@@ -17,7 +17,6 @@ long long unsigned int last_pos = 0;
 /* SSTF data structure. */
 struct sstf_data {
 	struct list_head queue;
-	//struct request; //usar aqui blk_rq_pos
 };
 
 static void sstf_merged_requests(struct request_queue *q, struct request *rq,
@@ -26,6 +25,7 @@ static void sstf_merged_requests(struct request_queue *q, struct request *rq,
 	list_del_init(&next->queuelist);
 }
 
+/* valor absolutor para long long int */
 static long long int abslong(long long int in){
 	if (in < 0){
 		return in *-1;	
@@ -33,6 +33,7 @@ static long long int abslong(long long int in){
 	return in;
 }
 
+/*Função para debug */
 static void printList(struct sstf_data *nd ){
 	printk(KERN_EMERG "INIT");
 	struct list_head *ptr;
@@ -45,18 +46,18 @@ static void printList(struct sstf_data *nd ){
 	printk(KERN_EMERG "END");
 }
 
-/* Esta função despacha o próximo bloco a ser lido. */
+/* Na versão CAD o dispatch sempre é feito no header */
 static int sstf_dispatch(struct request_queue *q, int force){
-	//return 0;
 	struct sstf_data *nd = q->elevator->elevator_data;
 	char direction = 'R';
 	struct request *rq;
 	//primeiro da lista
 	rq = list_first_entry_or_null(&nd->queue, struct request, queuelist);
 	if (rq) {
-		list_del_init(&rq->queuelist);
-		elv_dispatch_sort(q, rq);
 		last_pos = blk_rq_pos(rq);
+        list_del_init(&rq->queuelist);
+		elv_dispatch_sort(q, rq);
+		//printList(nd);
 		printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, last_pos);
 
 		return 1;
@@ -64,36 +65,46 @@ static int sstf_dispatch(struct request_queue *q, int force){
 	return 0;
 }
 
-//estratégia: adicionar a requisição de maneira ordenada pelo setor
+/*
+	Adiciona de maneira ordenada, compara a distância entre pares de nodos conseguintes,
+	se o novo request tem uma distância menor que o par corrente, coloca ele no meio.
+*/
 static void sstf_add_request(struct request_queue *q, struct request *rq){
-	//printk(KERN_EMERG "[SSTF] add init");
+	printk(KERN_EMERG "[SSTF] add %c %llu", direction, blk_rq_pos(rq));
+	
+	
 	struct sstf_data *nd = q->elevator->elevator_data;
 	char direction = 'R';
-	printk(KERN_EMERG "[SSTF] add %c %llu\n", direction, blk_rq_pos(rq));
 	
-	struct list_head *head, *ptr; 
-	head = &(nd -> queue);
+	struct list_head *ptr; 
 	long long unsigned int req_pos = blk_rq_pos(rq);	
 	struct request *head_req = list_first_entry_or_null(&nd->queue, struct request, queuelist);
 	long long unsigned int head_pos = (long long unsigned int) blk_rq_pos(head_req);
 
-	//No requests
+	// Lista vazia: adiciona em tail
+	
 	if(head_req == NULL){
 		list_add_tail(&rq->queuelist, &nd->queue);
+        printk(KERN_EMERG "[SSTF] add %c %llu\n", direction, blk_rq_pos(rq));
+	
 		return;
 	}
 	
-	//closer than first request
+	// Adiciona no head: Caso sua distância entre rq e head seja menor que head e next head
+	// |rq.pos - head| < |head.next - head| ==> rq <-> old_head <-> old_head.next ....
+	
 	if(abslong(req_pos - last_pos) < abslong(head_pos  - last_pos)){
-		struct list_head *head = &nd->queue;
-		list_replace_init(head, &rq->queuelist);
-		list_add(head, &nd->queue);
+		struct list_head *old_head = &nd->queue;
+        struct list_head *new_head = &rq->queuelist;
+        list_add(new_head, old_head);
+        
 		return;
 	} 
 	
-	//mid
-	ptr = head->next;
-	while(ptr->next != head){
+	// Adiciona no meio: Se a distacia entre rq e o nodo atual for menor que nodo atual e seu sucessor, adiciona ele no meio
+	
+	ptr = (&(nd -> queue))->next; //pula head porque já foi avaliado anteriormente.
+	while(ptr->next != &(nd -> queue)){
 		struct list_head *next = ptr->next;
 		//pega a pos 
 		struct request *curE = list_entry(ptr, struct request, queuelist); 
@@ -101,18 +112,18 @@ static void sstf_add_request(struct request_queue *q, struct request *rq){
 		long long unsigned int curPos = blk_rq_pos(curE);
 		long long unsigned int nextPos = blk_rq_pos(nextE);
 
+		// verifica se deve se rq deve ser inserido no meio
 		if(abslong(curPos - nextPos) > abslong(curPos - req_pos)){
-			list_add(&rq->queuelist, ptr);
-			return;
+			list_add(&rq->queuelist, ptr); 
+            return;
 		}
 
-		//blalba
 		ptr = next;
 	} 
 	
 	//tail
 	list_add_tail(&rq->queuelist, &nd->queue);
-	//printList(nd);
+    printk(KERN_EMERG "[SSTF] add %c %llu\n", direction, blk_rq_pos(rq));
 }
 
 static int sstf_init_queue(struct request_queue *q, struct elevator_type *e){
@@ -186,6 +197,6 @@ static void __exit sstf_exit(void)
 module_init(sstf_init);
 module_exit(sstf_exit);
 
-MODULE_AUTHOR("Miguel Xavier");
+MODULE_AUTHOR("Victor Putrich e Lucca");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SSTF IO scheduler");

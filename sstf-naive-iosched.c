@@ -32,33 +32,21 @@ static long long int abslong(long long int in){
 	return in;
 }
 
-/* Esta função despacha o próximo bloco a ser lido. */
+/* Na versão naive o dispatch itera toda lista buscando pela requisição mais próxima da última requisição atendida */
 static int sstf_dispatch(struct request_queue *q, int force){
 	struct sstf_data *nd = q->elevator->elevator_data;
 	char direction = 'R';
 	struct request *rq;
 
-	/* Aqui deve-se retirar uma requisição da fila e enviá-la para processamento.
-	 * Use como exemplo o driver noop-iosched.c. Veja como a requisição é tratada.
-	 *
-	 * Antes de retornar da função, imprima o sector que foi atendido.
-	 */
-
-	
-	
-
-	// * SEARCH FOR THE CLOSES REQUEST OF THE LAST SEEK POSITION
-	// for now we have to search for the closes request, maybe its better to order it in add_request
-	// se tiver ordenado pela posicao absoluta de seek, da ir iterando enquanto encontra uma distancia entre
-	// o current seek e o old seek, no momento que deixar de diminuir a distancia, retorna com o valor anterior.
-	struct request *closest_rq = NULL; //= kmalloc_node(sizeof(*nd), GFP_KERNEL, q->node);
+	// busca pela requisição mais próxima de last_pos
+	struct request *closest_rq = NULL;
 	struct list_head *closest_head = NULL;
 	long long unsigned int closest_dist = 23372036854775807;
 	struct list_head *ptr;
 	list_for_each(ptr, &nd->queue){
 		rq = list_entry(ptr, struct request, queuelist); 
 		long long unsigned int new_pos = blk_rq_pos(rq);
-		//printk(KERN_EMERG "pos %llu, last pos %llu\n", new_pos, last_pos);
+		
 		if ( abslong(new_pos - last_pos) < closest_dist ) {
 			closest_rq = rq;
 			closest_head = ptr;
@@ -75,30 +63,13 @@ static int sstf_dispatch(struct request_queue *q, int force){
 		return 1;
 	}
 
-	// if (rq) {
-	// 	last_pos = blk_rq_pos(rq);
-	// 	list_del_init(&rq->queuelist);
-	// 	elv_dispatch_sort(q, rq);
-	// 	printk(KERN_EMERG "[SSTF] dsp %c %llu\n", direction, blk_rq_pos(rq));
-
-	// 	return 1;
-	// }
 	return 0;
 }
 
-//estratégia: adicionar a requisição de maneira ordenada pelo setor
+/* Versão Naive sempre adiciona em tail o novo request, deixa a lógica para o dispatch */
 static void sstf_add_request(struct request_queue *q, struct request *rq){
 	struct sstf_data *nd = q->elevator->elevator_data;
 	char direction = 'R';
-
-	/* Aqui deve-se adicionar uma requisição na fila do driver.
-	 * Use como exemplo o driver noop-iosched.c
-	 *
-	 * Antes de retornar da função, imprima o sector que foi adicionado na lista.
-	 */
-	
-	// * IDEIA: ordernar lista pelo blk_rq_pos absoluto
-
 
 	list_add_tail(&rq->queuelist, &nd->queue);
 	printk(KERN_EMERG "[SSTF] add %c %llu\n", direction, blk_rq_pos(rq));
