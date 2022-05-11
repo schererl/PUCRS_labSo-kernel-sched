@@ -1,0 +1,13 @@
+erro, disp 622232 deveria ser disp 107032
+	last=335480, 286752 > 228448  'H, last = 335480'
+erro, disp 756616 deveria ser disp 721064
+	last=731608, 25008 > 10544  'H, last = 469840'
+erro, disp 482192 deveria ser disp 491032
+	last=542792, 60600 > 51760  'M'
+erro, disp 272368 deveria ser disp 491032
+	last=482192, 209824 > 8840  'M'
+erro, disp 21552 deveria ser disp 265944
+	last=272368, 250816 > 6424  'H, last = 272368'
+erro, disp 843072 deveria ser disp 14936
+	last=21552, 821520 > 6616  'M'
+done
