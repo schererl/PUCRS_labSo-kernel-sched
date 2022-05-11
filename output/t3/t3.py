@@ -16,7 +16,6 @@ with open(filename) as file:
             line = file.readline()
             continue
             
-        print(line)
         val = int(line[3].strip())
         if 'add' in line[1]:
             req += [val]
@@ -33,7 +32,7 @@ with open(filename) as file:
             while 'END' not in lLine:
                 addList += [int(lLine.strip())]
                 lLine = file.readline()
-            print(addList)
+            print('Add {}, last={} list {}'.format(val, last, addList))
             line = file.readline()
             
         elif 'dsp' in line[1]:
