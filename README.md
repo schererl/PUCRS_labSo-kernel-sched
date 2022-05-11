@@ -9,6 +9,7 @@ Tabela de conteúdos
    * [Biblioteca-list](#Biblioteca-list)
    * [Implementação](#Implementação)
    * [Execução](#Execução)
+   * [Validador SSTF](#Validador_de_SSTF)
 <!--te-->
 
 # Sobre
@@ -204,9 +205,9 @@ Removemos o 'HEAD' da fila e se este não for null, atualizamos a última posiç
  Apresentaremos a seguir uma comparação de acesso entre o Noop e o *SSTF-Naive*, ou seja, a ordem de acesso ao disco é referente a sequência de dispatch das duas políticas. Executamos um test de stress de acesso ao disco, produzimos 4 forks em 'sector_read' produzindo 10 operações de acesso a disco. Os gráficos tem uma relação de números de requisições atendidas por posição de seek:
  
  <p float="left">
-  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/images/execucao-noop.png" width="450" alt="Noop"/>
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/images/execucao-noop.png" width="400" alt="Noop"/>
   
-  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/images/execucao-sstf-naive.png" width="450" alt="SSTF-Naive"/>
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/images/execucao-sstf-naive.png" width="400" alt="SSTF-Naive"/>
  </p>
  
  O gráfico a esquerda representa a operação de *Noop* e o gráfico à direita *SSTF-Naive*. A medida que mais requisições vão se acumulado no SSTF ele vai deixando de apresentar variações bruscas de sentido e sua declividade fica cada vez mais suave, atendendo uma grande parcela de requisições em um único movimento de subida ou descida. Isso ocorre porque a medida que as requisições se acumulam, elas vão sendo atendidas visando minimizar a distância que o disco deve percorrer até a próxima requisição. 
@@ -228,7 +229,7 @@ Removemos o 'HEAD' da fila e se este não for null, atualizamos a última posiç
  Tentamos medir os tempos dos testes usando a biblioteca "linux/time.h" que em teoria pode ser usada pelo kernel para extrair os tempos de execução, porém não conseguimos usar as estruturas por um erro interno na hora de compilar. Dessa forma poderíamos comparar o *SSTF-Naive* com *SSTF-CAD*
 avaliando não só a política, mas a eficiência de execução dos dois. 
 
-## Validador de SSTF
+# Validador_de_SSTF
 Criamos também um módulos (3 na verdade) que processa os diferentes logs gerados neste trabalho que encontram-se [aqui](https://github.com/schererl/labSo-escalonador/tree/main/output/logs). Cm objetivo de avaliarmos se a nossa ordenação tanto do SSTF-Naive como do SSTF-CAD estava correta, processamos alguns logs de ambos para nos certificarmos que todos os dispatches feitos realmente pegava a requisição mais próxima da última atendida.
 
 ### SSTF-Naive
