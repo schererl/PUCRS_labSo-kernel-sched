@@ -1,5 +1,3 @@
-# kkk eae man bota publico e deleta isso 
-
 # labSo-escalonador
 Victor Putrich e Lucca Dornelles
 
@@ -206,25 +204,38 @@ Removemos o 'HEAD' da fila e se este não for null, atualizamos a última posiç
  Apresentaremos a seguir uma comparação de acesso entre o Noop e o *SSTF-Naive*, ou seja, a ordem de acesso ao disco é referente a sequência de dispatch das duas políticas. Executamos um test de stress de acesso ao disco, produzimos 4 forks em 'sector_read' produzindo 10 operações de acesso a disco. Os gráficos tem uma relação de números de requisições atendidas por posição de seek:
  
  <p float="left">
-  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-noop.png" width="400" alt="Noop"/>
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/images/execucao-noop.png" width="450" alt="Noop"/>
   
-  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-sstf-naive.png" width="400" alt="SSTF-Naive"/>
+  <img src="https://github.com/schererl/labSo-escalonador/blob/main/output/images/execucao-sstf-naive.png" width="450" alt="SSTF-Naive"/>
  </p>
  
  O gráfico a esquerda representa a operação de *Noop* e o gráfico à direita *SSTF-Naive*. A medida que mais requisições vão se acumulado no SSTF ele vai deixando de apresentar variações bruscas de sentido e sua declividade fica cada vez mais suave, atendendo uma grande parcela de requisições em um único movimento de subida ou descida. Isso ocorre porque a medida que as requisições se acumulam, elas vão sendo atendidas visando minimizar a distância que o disco deve percorrer até a próxima requisição. 
  
- *As tabelas com os resultados que originaram os gráficos se encontram neste repositório nos links:*
-  * https://github.com/schererl/labSo-escalonador/blob/main/output/log-noop.txt
-  * https://github.com/schererl/labSo-escalonador/blob/main/output/log-sstf-Naive_4f.txt
+ *As tabelas com os resultados que originaram os gráficos se encontram neste repositório nos arquivos:*
+  * https://github.com/schererl/labSo-escalonador/blob/main/output/logs/log-noop.txt
+  * https://github.com/schererl/labSo-escalonador/blob/main/output/logs/log-sstf-Naive_4f.txt
  
- Para que fosse possível visualizar de forma mais clara a execução da política *SSTF-CAD* (figura logo abaixo), foi necessário aumentar o número de forks executados para 6 e ainda colocar os processos em espera antes de fazer Dispatch. O que ocorreu com os testes de estresse em disco foi que todas as requisições estavam entrando e saindo da fila diretamente. A explicação que encontramos para este comportamento, que ficou muito mais frequente no *CAD*, foi que como a complexidade da operação de ADD aumentou e o de Dispatch ficou o mais simples possível, o kernel conseguia consumir requisições muito mais rápido que adicioná-las, em outras palavras, o fluxo de entrada ficou muito mais rápido que o fluxo de saída, portanto, a política de ordenamento não estava conseguindo sequer entrar em ação.
+ Para que fosse possível visualizar de forma mais clara a execução da política *SSTF-CAD* (figura logo abaixo), foi necessário aumentar o número de forks executados para 6 e ainda colocar os processos em espera com tempos aleatórios de até 1s, antes de fazer Dispatch. O que ocorreu com os testes de estresse em disco foi que todas as requisições estavam entrando e saindo da fila diretamente. A explicação que encontramos para este comportamento, que ficou muito mais frequente no *CAD*, foi que como a complexidade da operação de ADD aumentou e o de Dispatch ficou o mais simples possível, o kernel conseguia consumir requisições muito mais rápido que adicioná-las, em outras palavras, o fluxo de entrada ficou muito mais rápido que o fluxo de saída, portanto, a política de ordenamento não estava conseguindo sequer entrar em ação.
  
- <p align="center"><img src="https://github.com/schererl/labSo-escalonador/blob/main/output/execucao-sstf-CAD-6FORKS.png" width="850"/></p>
+ <p align="center"><img src="https://github.com/schererl/labSo-escalonador/blob/main/output/images/execucao-sstf-CAD-6FORKS.png" width="850"/></p>
  
- O gráfico acima mostra que mesmo aumentando o número de processos, logo, aumentando as chances de ocorrerem operações de adição simultâneas, a execução muitas vezes não consegue enfileirar uma grande quantidade de requisições. Observamos também os momentos aonde os processos são colocados para dormir e logo é desencadeado uma sequênica de dispatch que é feita em ordem, tanto com a inclinação virada para cima ou para baixo, ocorrendo periodicamente.
+ *A tabela com os resultados extraídos para gerar o gráfico podem ser encontradas no arquivo:*
+  * https://github.com/schererl/labSo-escalonador/blob/main/output/logs/log-sstf-CAD_6f-RND.txt.
  
- Devido a discrepância entre as duas operações, tivemos dificuldade em fazer um teste que pudesse ser comparado com o *Noop* e o *SSTF-Naive*, não podemos determinar se o *SSTF-Naive* é menos eficiente em termos de tempo de execução que o *SSTF-CAD*, porém podemos deduzir que o *CAD* é mais eficiente por não precisar passar por toda lista toda vez que fora fazer uma operação de inserção na fila, ao contrário do Dispatch no naive. Presumimos que o *CAD* seja mais eficiente em termos de tempo de execução, mas nos testes que realizamos, o *SSTF-Naive* teve um melhor aproveitamento e utilização de sua política.
+ O gráfico em questão mostra que as requisições foram atendidas com um comportamento que se acentuou quando comparado ao teste anterior, o dispatch muitas vezes realiza todo o movimento de subida e depois todo o movimento de descida até a requisição mais alto ou mais baixa, reproduzindo o que pensamos que seria a forma de fazer ordenando a partir da fila. 
+ Foram atendidas um total de 637 requisições, comparados às 318 requisições dos testes anteriores, devido a discrepância entre as duas operações, tivemos dificuldade em fazer um teste que pudesse ser comparado com o *Noop* e o *SSTF-Naive*, não podemos determinar se o *SSTF-Naive* é menos eficiente em termos de tempo de execução que o *SSTF-CAD*, porém podemos deduzir que o *CAD* é mais eficiente por não precisar passar por toda lista toda vez que fora fazer uma operação de inserção na fila, ao contrário do Dispatch no naive. Presumimos que o *CAD* seja mais eficiente em termos de tempo de execução, mas nos testes que realizamos, o *SSTF-Naive* teve um melhor aproveitamento e utilização de sua política.
  
  Tentamos medir os tempos dos testes usando a biblioteca "linux/time.h" que em teoria pode ser usada pelo kernel para extrair os tempos de execução, porém não conseguimos usar as estruturas por um erro interno na hora de compilar. Dessa forma poderíamos comparar o *SSTF-Naive* com *SSTF-CAD*
 avaliando não só a política, mas a eficiência de execução dos dois. 
+
+## Validador de SSTF
+Criamos também um módulos (3 na verdade) que processa os diferentes logs gerados neste trabalho que encontram-se [aqui](https://github.com/schererl/labSo-escalonador/tree/main/output/logs). Cm objetivo de avaliarmos se a nossa ordenação tanto do SSTF-Naive como do SSTF-CAD estava correta, processamos alguns logs de ambos para nos certificarmos que todos os dispatches feitos realmente pegava a requisição mais próxima da última atendida.
+
+### SSTF-Naive
+Para validarmos o sstf-Naive criamos um [validador](https://github.com/schererl/labSo-escalonador/blob/main/output/validadores/validador.py), ele basicamente olha para o log e avalia se realmente está correto a sequencia de dispatchs feitas. Se tiver, é gerada uma saída "done". Rodamos o arquivo log-sstf-Naive_4f.txt passando por este validador e o resultado foi positivo. 
+
+### SSTF-CAD
+No SSTF-CAD, usamos um [validador diferente](https://github.com/schererl/labSo-escalonador/blob/main/output/validadores/t2/validador_sstf_flags.py). O motivo de ter usado um novo validador é que ele le um formato de log diferente do usado nos experimentos, este especifica qual das operações de add foi usada no CAD: 'N' para quando a fila estava vazia, 'H' quando inserida no 'head', 'M' no meio de dois elementos e 't' no 'tail'.
+
+O material do Teste 2 que é do sstf-cad está na [pasta de teste 2]([https://github.com/schererl/labSo-escalonador/blob/main/output/validadores/t2]), a saída do validador apontou algumas situações aonde supostamente a política teria falhado em pegar a requisição da fila mais próxima, foram 6 situações aonde isto ocorreu. No presente momento, não conseguimos identificar o problema e não pudemos concluir se foi um problema no código ou na lógica de ordenamento.
  
