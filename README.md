@@ -1,3 +1,5 @@
+# kkk eae man bota publico e deleta isso 
+
 # labSo-escalonador
 Victor Putrich e Lucca Dornelles
 
