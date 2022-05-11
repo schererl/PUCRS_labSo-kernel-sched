@@ -1,5 +1,5 @@
 # labSo-escalonador
-Victor Putrich e Lucca Alguma Coisa
+Victor Putrich e Lucca Dornelles
 
 Tabela de conteúdos
 =================
