@@ -7,6 +7,7 @@ filename = sys.argv[1]
 last = 0
 req = []
 v = {}
+lSize = []
 with open(filename) as file:
     for line in file:
         line = line.split(' ', 4)
@@ -22,6 +23,7 @@ with open(filename) as file:
                 v[val] = ''
             
         elif 'dsp' in line[1]:
+            lSize += [len(req)]
             dist = abs(last - val)
             minP = val
             minD = dist
@@ -34,3 +36,9 @@ with open(filename) as file:
                 print('erro, disp {} deveria ser disp {}\n\tlast={}, {} > {}  \'{}\''.format(val, minP, last, dist, minD, v[val].strip()))
             last = val
     print('done')
+print('\n')
+lSize.sort()
+while len(lSize) > 0:
+    val = lSize[0]
+    print('{} listas com {} reqs'.format(lSize.count(val), val))
+    lSize = [x for x in lSize if x != val]
