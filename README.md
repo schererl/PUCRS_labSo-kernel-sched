@@ -8,8 +8,12 @@ Tabela de conteúdos
    * [Escalonador](#Escalonador)
    * [Biblioteca-list](#Biblioteca-list)
    * [Implementação](#Implementação)
-   * [Execução](#Execução)
    * [Validador SSTF](#Validador_de_SSTF)
+   * [Estatísticas](#Estatísticas)
+   * [Execução](#Execução)
+   * [Execução Implementação](##Execução_Implementação)
+   * [Execução Validadores](##Execução_Validadores)
+   * [Estatísticas Coletadas](##Estatísticas_Coletadas)
 <!--te-->
 
 # Sobre
@@ -196,10 +200,30 @@ struct sstf_data *nd = q->elevator->elevator_data;
 ```
 Removemos o 'HEAD' da fila e se este não for null, atualizamos a última posição lida e damos dispatch na requisição.
 
+# Validador_de_SSTF
+Criamos um módulos que processa os diferentes logs gerados neste trabalho que encontram-se [aqui](https://github.com/schererl/labSo-escalonador/tree/main/output/logs). Com o objetivo de avaliarmos se a nossa ordenação tanto do SSTF-Naive como do SSTF-CAD estava correta, processamos alguns logs de ambos para nos certificarmos que todos os dispatches feitos realmente pegava a requisição mais próxima da última atendida.
 
-# Execução
+# Estatísticas
 
-## Resultados
+Para tentarmos dimensionar a diferença entre Noop e o SSTF, desenvolvemos um [script](https://github.com/schererl/labSo-escalonador/blob/main/output/stats-log/compute-stats.py) que recolhe um conjunto de estatísticas para comparar as duas execuções. As estatísticas recollhidas são:
+
+* Noop Distance: Somam-se a distância entre todas as requisições, por ordem de chegada.
+* SSTF Distance: Somam-se a distância entre todas as requsições, por ordem de dispatch.
+* Result: 	 Porcentagem da distancia percorrida SSTF em relação à Noop. ((SSTF D)/(Noop D) )
+* Result^(-1): 	 Indica quantas vezes SSTF foi melhor que Noop. (Noop D/SSTF D)
+* Exploitation:  Qual foi o aproveitamento (%) de SSTF em relação a Noop. (1 - Result)
+* Noop blocks: 	 Quantos blocos foram percorridos por Noop. Assumindo tamanho de bloco de 512 bytes.
+* SSTF blocks: 	 Quantos blocos foram percorridos por SSTF. Assumindo tamanho de bloco de 512 bytes.
+* Div blocks: 	 Quantos blocos SSTF percorreu em relação ao que percorreria Noop (%). (SSTF blocks/Noop blocks)
+
+
+ Tentamos medir os tempos dos testes usando a biblioteca "linux/time.h" que em teoria pode ser usada pelo kernel para extrair os tempos de execução, porém não conseguimos usar as estruturas por um erro interno na hora de compilar. Dessa forma poderíamos comparar o *SSTF-Naive* com *SSTF-CAD*
+avaliando não só a política, mas a eficiência de execução dos dois. 
+
+
+# Resultados
+
+## Execução_Implementação
  Para que possamos visualizar a diferença nas políticas de leitura ativamos no nosso Kernel Linux a política desejada Noop ou SSTF e rodamos o script sector_read para disparar diversas requisições de acesso ao disco. 
  
  Apresentaremos a seguir uma comparação de acesso entre o Noop e o *SSTF-Naive*, ou seja, a ordem de acesso ao disco é referente a sequência de dispatch das duas políticas. Executamos um test de stress de acesso ao disco, produzimos 4 forks em 'sector_read' produzindo 10 operações de acesso a disco. Os gráficos tem uma relação de números de requisições atendidas por posição de seek:
@@ -225,13 +249,8 @@ Removemos o 'HEAD' da fila e se este não for null, atualizamos a última posiç
  
  O gráfico em questão mostra que as requisições foram atendidas com um comportamento que se acentuou quando comparado ao teste anterior, o dispatch muitas vezes realiza todo o movimento de subida e depois todo o movimento de descida até a requisição mais alto ou mais baixa, reproduzindo o que pensamos que seria a forma de fazer ordenando a partir da fila. 
  Foram atendidas um total de 637 requisições, comparados às 318 requisições dos testes anteriores, devido a discrepância entre as duas operações, tivemos dificuldade em fazer um teste que pudesse ser comparado com o *Noop* e o *SSTF-Naive*, não podemos determinar se o *Naive* é menos eficiente em termos de tempo de execução que o *CAD*, porém podemos deduzir que o *CAD* é mais eficiente por não precisar passar por toda lista toda vez que fora fazer uma operação de inserção na fila, ao contrário do Dispatch no naive. 
- 
- Tentamos medir os tempos dos testes usando a biblioteca "linux/time.h" que em teoria pode ser usada pelo kernel para extrair os tempos de execução, porém não conseguimos usar as estruturas por um erro interno na hora de compilar. Dessa forma poderíamos comparar o *SSTF-Naive* com *SSTF-CAD*
-avaliando não só a política, mas a eficiência de execução dos dois. 
 
-# Validador_de_SSTF
-Criamos também um módulos que processa os diferentes logs gerados neste trabalho que encontram-se [aqui](https://github.com/schererl/labSo-escalonador/tree/main/output/logs). Com o objetivo de avaliarmos se a nossa ordenação tanto do SSTF-Naive como do SSTF-CAD estava correta, processamos alguns logs de ambos para nos certificarmos que todos os dispatches feitos realmente pegava a requisição mais próxima da última atendida.
-
+## Execução_Validadores
 ### SSTF-Naive
 Para validarmos o sstf-Naive criamos um [validador](https://github.com/schererl/labSo-escalonador/blob/main/output/validadores/validador.py), ele basicamente olha para o log e avalia se está correta a sequencia de dispatchs feitas. Se tiver, é gerada uma saída "done". Rodamos o arquivo log-sstf-Naive_4f.txt passando por este validador e o resultado foi positivo. 
 
@@ -239,4 +258,30 @@ Para validarmos o sstf-Naive criamos um [validador](https://github.com/schererl/
 No SSTF-CAD, usamos um [validador diferente](https://github.com/schererl/labSo-escalonador/blob/main/output/validadores/t2/validador_sstf_flags.py). O motivo de ter usado um novo validador é que ele le um formato de log diferente do usado nos experimentos, este especifica qual das operações de add foi usada no CAD: 'N' para quando a fila estava vazia, 'H' quando inserida no 'head', 'M' no meio de dois elementos e 't' no 'tail'.
 
 O material do Teste 2 que é do sstf-cad está na [pasta de teste 2]([https://github.com/schererl/labSo-escalonador/blob/main/output/validadores/t2]), a saída do validador apontou algumas situações aonde supostamente a política teria falhado em pegar a requisição da fila mais próxima, foram 6 situações aonde isto ocorreu. No presente momento, não conseguimos identificar o problema e não pudemos concluir se foi um problema de implementação ou na lógica de ordenamento.
+
+## Estatísticas_Coletadas
+
+As estatísticas coletadas podem ser acessadas aqui: [https://github.com/schererl/labSo-escalonador/tree/main/output/stats-log]. Foram processados dois logs, o [SSTF-Naive6f-RND](https://github.com/schererl/labSo-escalonador/blob/main/output/logs/log-sstf-Naive_6f-RND.txt) e o [SSTF-CAD6f-RND](https://github.com/schererl/labSo-escalonador/blob/main/output/logs/log-sstf-CAD_6f-RND.txt). Neles pudemos acompanhar os resultado descritos na [Seção de Estatísticas](#Estatísticas).
+
+Resultados da execução Naive à esquerda e da execução CAD à direita:
+
+|||||| |
+| ---                  | ---          |  ---| ---| ---          |     ---      |
+|             LOG File |  SSTF-Naive6f-RND | | |	    LOG File | SSTF-CAD6f-RND |
+|        Noop Distance |  462.971.352      | | |       Noop Distance |  446.265.152 |
+|  SSTF-Naive Distance |   27.871.128      | | |   SSTF-CAD Distance |   22.900.600 |
+|            Result^-1 |      16.61x       | | |           Result^-1 |      19.49x  |
+|         Exploitation |     93%           | | |        Exploitation |        94%   |
+|	   Noop Blocks |      112.708      | | |         Noop Blocks |      108.636 | 
+|	   SSTF Blocks |         6505      | | |         SSTF Blocks |         5291 |
+|	     Div Blocks|     5.77%         | | |          Div Blocks |        4.87% |
+
+Com as estatísticas coletadas fica claro a diferença de  aproveitamento da política SSTF em relação à Noop, amboms ficaram acima de 90%. O parâmetro Result^-1 nos da também uma ideia a magnitude de melhoria do uso da política, em ambas foi de pelo menos 15 vezes menor a distância percorrida. Por fim, temos também a quantidade blocos percorridos e constatamentos que o SSTF percore cerca de 5% dos blocos que percorreria sem uma política específica. Estes dados podem sofrer variações de acordo com o volume de requisições processadas, nestes testes usamos o comando sleep com um número aleatório entre 0 e 1 para força que mais requisições conseguissem entrar na fila sem que fosse dado o dispatch rapidamente.
+
+Por fim, podemos perceber que o erro percebido no nosso algoritmo SSTF-CAD não tem um impacto significativo para a política, dada a aleatoriedade dos testes inclusive teve um resultado melhor que o nosso modelo Naive. Acreditamos que diferença entre os dois modelos tenha sido desprezível dada a amostra coletada.
+	
+
+
+ 
+
  
