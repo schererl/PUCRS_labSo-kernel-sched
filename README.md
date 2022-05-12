@@ -215,7 +215,7 @@ Para tentarmos dimensionar a diferença entre Noop e o SSTF, desenvolvemos um [s
 
 
  Tentamos medir os tempos dos testes usando a biblioteca "linux/time.h" que em teoria pode ser usada pelo kernel para extrair os tempos de execução, porém não conseguimos usar as estruturas por um erro interno na hora de compilar. Dessa forma poderíamos comparar o *SSTF-Naive* com *SSTF-CAD*
-avaliando não só a política, mas a eficiência de execução dos dois. Podemos acompanhar na [seção de resultados](## Estatísticas_Coletadas) o processamentos dos logs e suas estatísticas.
+avaliando não só a política, mas a eficiência de execução dos dois. Podemos acompanhar na Subseção dos Resultados o processamentos dos logs e suas estatísticas.
 
 
 # Resultados
@@ -276,6 +276,8 @@ Resultados da execução Naive à esquerda e da execução CAD à direita:
 Com as estatísticas coletadas fica claro a diferença de  aproveitamento da política SSTF em relação à Noop, amboms ficaram acima de 90%. O parâmetro Result^-1 nos da também uma ideia a magnitude de melhoria do uso da política, em ambas foi de pelo menos 15 vezes menor a distância percorrida. Por fim, temos também a quantidade blocos percorridos e constatamentos que o SSTF percore cerca de 5% dos blocos que percorreria sem uma política específica. Estes dados podem sofrer variações de acordo com o volume de requisições processadas, nestes testes usamos o comando sleep com um número aleatório entre 0 e 1 para força que mais requisições conseguissem entrar na fila sem que fosse dado o dispatch rapidamente.
 
 Por fim, podemos perceber que o erro percebido no nosso algoritmo SSTF-CAD não tem um impacto significativo para a política, dada a aleatoriedade dos testes inclusive teve um resultado melhor que o nosso modelo Naive. Acreditamos que diferença entre os dois modelos tenha sido desprezível dada a amostra coletada.
+
+FIM
 	
 
 
