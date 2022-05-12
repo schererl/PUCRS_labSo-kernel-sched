@@ -275,7 +275,7 @@ Resultados da execução Naive à esquerda e da execução CAD à direita:
 
 Com as estatísticas coletadas fica claro a diferença de aproveitamento da política SSTF em relação à Noop, ambos testes ficaram acima de 90%. O parâmetro Result^-1 nos da também uma ideia da magnitude de melhoria do uso da política, em ambos percorream pelo menos 15 vezes menos o disco em relação à Noop. Por fim, temos também a quantidade blocos percorridos e constatamos que o SSTF percore cerca de 5% dos blocos que percorreria sem uma política específica. Estes dados podem sofrer variações de acordo com o volume de requisições processadas, nestes testes usamos o comando sleep com um número aleatório entre 0 e 1 para forçar que mais requisições conseguissem entrar na fila sem que fosse dado o dispatch rapidamente.
 
-Podemos perceber que o erro percebido no nosso algoritmo SSTF-CAD não tem um impacto significativo para a política, dada a aleatoriedade dos testes, inclusive teve um resultado melhor que o nosso modelo Naive. Acreditamos que diferença entre os dois modelos tenha sido desprezível de acordo a amostra coletada.
+Podemos perceber que a inconsistência no nosso algoritmo SSTF-CAD não tem um impacto significativo para a política, dada a aleatoriedade dos testes, inclusive teve um resultado melhor que o nosso modelo Naive. Acreditamos que diferença entre os dois modelos tenha sido desprezível de acordo a amostra coletada.
 
 FIM
 	
