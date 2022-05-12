@@ -1,0 +1,8 @@
+Noop Distance: 462971352
+SSTF Distance: 27871128
+Result: 6.02%
+Result^1: 16.61x
+Exploitation: 93%
+Noop blocks: 112708
+SSTF blocks: 6505
+Div blocks: 5.77%
