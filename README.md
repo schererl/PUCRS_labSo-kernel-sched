@@ -11,9 +11,6 @@ Tabela de conteúdos
    * [Validador SSTF](#Validador_de_SSTF)
    * [Estatísticas](#Estatísticas)
    * [Execução](#Execução)
-   	* [Execução Implementação](##Execução_Implementação)
-   	* [Execução Validadores](##Execução_Validadores)
-   	* [Estatísticas Coletadas](##Estatísticas_Coletadas)
 <!--te-->
 
 # Sobre
@@ -218,7 +215,7 @@ Para tentarmos dimensionar a diferença entre Noop e o SSTF, desenvolvemos um [s
 
 
  Tentamos medir os tempos dos testes usando a biblioteca "linux/time.h" que em teoria pode ser usada pelo kernel para extrair os tempos de execução, porém não conseguimos usar as estruturas por um erro interno na hora de compilar. Dessa forma poderíamos comparar o *SSTF-Naive* com *SSTF-CAD*
-avaliando não só a política, mas a eficiência de execução dos dois. 
+avaliando não só a política, mas a eficiência de execução dos dois. Podemos acompanhar na [seção de resultados](## Estatísticas_Coletadas) o processamentos dos logs e suas estatísticas.
 
 
 # Resultados
