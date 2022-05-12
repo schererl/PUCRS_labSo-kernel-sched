@@ -267,11 +267,11 @@ Resultados da execução Naive à esquerda e da execução CAD à direita:
 |             LOG File |  SSTF-Naive6f-RND | | |	    LOG File | SSTF-CAD6f-RND |
 |        Noop Distance |  462.971.352      | | |       Noop Distance |  446.265.152 |
 |  SSTF-Naive Distance |   27.871.128      | | |   SSTF-CAD Distance |   22.900.600 |
-|            Result^-1 |      16.61x       | | |           Result^-1 |      19.49x  |
+|            Result^-1 |      16,61x       | | |           Result^-1 |      19,49x  |
 |         Exploitation |     93%           | | |        Exploitation |        94%   |
 |	   Noop Blocks |      112.708      | | |         Noop Blocks |      108.636 | 
 |	   SSTF Blocks |         6505      | | |         SSTF Blocks |         5291 |
-|	     Div Blocks|     5.77%         | | |          Div Blocks |        4.87% |
+|	     Div Blocks|     5,77%         | | |          Div Blocks |        4,87% |
 
 Com as estatísticas coletadas fica claro a diferença de aproveitamento da política SSTF em relação à Noop, ambos testes ficaram acima de 90%. O parâmetro Result^-1 nos da também uma ideia da magnitude de melhoria do uso da política, em ambos percorream pelo menos 15 vezes menos o disco em relação à Noop. Por fim, temos também a quantidade blocos percorridos e constatamos que o SSTF percore cerca de 5% dos blocos que percorreria sem uma política específica. Estes dados podem sofrer variações de acordo com o volume de requisições processadas, nestes testes usamos o comando sleep com um número aleatório entre 0 e 1 para forçar que mais requisições conseguissem entrar na fila sem que fosse dado o dispatch rapidamente.
 
