@@ -11,9 +11,9 @@ Tabela de conteúdos
    * [Validador SSTF](#Validador_de_SSTF)
    * [Estatísticas](#Estatísticas)
    * [Execução](#Execução)
-   * [Execução Implementação](##Execução_Implementação)
-   * [Execução Validadores](##Execução_Validadores)
-   * [Estatísticas Coletadas](##Estatísticas_Coletadas)
+   	* [Execução Implementação](##Execução_Implementação)
+   	* [Execução Validadores](##Execução_Validadores)
+   	* [Estatísticas Coletadas](##Estatísticas_Coletadas)
 <!--te-->
 
 # Sobre
