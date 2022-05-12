@@ -202,7 +202,7 @@ Criamos um módulos que processa os diferentes logs gerados neste trabalho que e
 
 # Estatísticas
 
-Para tentarmos dimensionar a diferença entre Noop e o SSTF, desenvolvemos um [script](https://github.com/schererl/labSo-escalonador/blob/main/output/stats-log/compute-stats.py) que recolhe um conjunto de estatísticas para comparar as duas execuções. As estatísticas recollhidas são:
+Para tentarmos dimensionar a diferença entre Noop e o SSTF, desenvolvemos um [script](https://github.com/schererl/labSo-escalonador/blob/main/output/stats-log/compute-stats.py) que coleta um conjunto de estatísticas para comparar as duas execuções:
 
 * Noop Distance: Somam-se a distância entre todas as requisições, por ordem de chegada.
 * SSTF Distance: Somam-se a distância entre todas as requsições, por ordem de dispatch.
